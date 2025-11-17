@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-
 class PrepPage(QWidget):
     # (selected_mic: str, selected_speaker: str)를 넘겨줌
     start_requested = Signal(str, str)
@@ -45,6 +44,7 @@ class PrepPage(QWidget):
 
         # 2. 안내 텍스트 영역
         guide_group = QGroupBox("측정 전 안내")
+        guide_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         guide_layout = QVBoxLayout()
 
         guide_text = (
@@ -65,6 +65,7 @@ class PrepPage(QWidget):
 
         # 3. 체크리스트 영역
         checklist_group = QGroupBox("체크리스트")
+        checklist_group.setStyleSheet("QGroupBox { font-weight: bold; }")
         checklist_layout = QVBoxLayout()
 
         self.chk_mic = QCheckBox("마이크 입력 장치를 올바르게 선택했습니다.")

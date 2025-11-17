@@ -9,6 +9,7 @@ import sys
 
 from ui.prep_page import PrepPage
 from ui.record_page import RecordPage
+from ui.result_page import ResultPage
 
 class MainWindow(QWidget):
     def __init__(self, on_start_measurement=None):
@@ -16,7 +17,7 @@ class MainWindow(QWidget):
         self.on_start_measurement = on_start_measurement
 
         self.setWindowTitle("BoomingScanner")
-        self.setMinimumSize(600, 500)
+        self.setMinimumSize(600, 600)
 
         self._build_ui()
 
@@ -25,9 +26,11 @@ class MainWindow(QWidget):
 
         self.prep_page = PrepPage()
         self.record_page = RecordPage()
+        self.result_page = ResultPage()
         
         self.stack.addWidget(self.prep_page)   # index 0
         self.stack.addWidget(self.record_page)  # index 1
+        self.stack.addWidget(self.result_page)  # index 2
 
         self.prep_page.start_requested.connect(self._on_start_requested)
         self.record_page.back_requested.connect(self._on_back_from_record)
@@ -53,6 +56,14 @@ class MainWindow(QWidget):
         print("[UI] back_requested from RecordPage")
         self.stack.setCurrentWidget(self.prep_page)
 
+    def show_result_page(self, summary: str, booming_info: str, eq_recommendation: str, freqs, response_db, booming_bands=None):
+        self.result_page.set_summary(summary)
+        self.result_page.set_booming_result(booming_info)
+        self.result_page.set_eq_recommendation(eq_recommendation)
+        self.result_page.plot_frequency_response(freqs, response_db, booming_bands)
+
+        self.stack.setCurrentWidget(self.result_page)
+        
 def run_gui(on_start_measurement=None):
     app = QApplication(sys.argv)
     window = MainWindow(on_start_measurement=on_start_measurement)
