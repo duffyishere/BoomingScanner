@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 import sys
 
 from ui.prep_page import PrepPage
+from ui.record_page import RecordPage
 
 class MainWindow(QWidget):
     def __init__(self, on_start_measurement=None):
@@ -23,8 +24,13 @@ class MainWindow(QWidget):
         self.stack = QStackedWidget()
 
         self.prep_page = PrepPage()
+        self.record_page = RecordPage()
+        
         self.stack.addWidget(self.prep_page)   # index 0
+        self.stack.addWidget(self.record_page)  # index 1
+
         self.prep_page.start_requested.connect(self._on_start_requested)
+        self.record_page.back_requested.connect(self._on_back_from_record)
 
         root_layout = QVBoxLayout()
         root_layout.addWidget(self.stack)
@@ -38,13 +44,14 @@ class MainWindow(QWidget):
         """
         print(f"[UI] start_requested: mic={selected_mic}, speaker={selected_speaker}")
 
+        self.stack.setCurrentWidget(self.record_page)
+
         if self.on_start_measurement is not None:
             self.on_start_measurement(selected_mic, selected_speaker)
 
-    def _on_back_requested(self):
+    def _on_back_from_record(self):
         print("[UI] back_requested from RecordPage")
         self.stack.setCurrentWidget(self.prep_page)
-
 
 def run_gui(on_start_measurement=None):
     app = QApplication(sys.argv)
