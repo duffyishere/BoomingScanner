@@ -1,13 +1,3 @@
-
-
-"""
-오디오 입출력 장치 정보를 다루는 유틸리티 모듈.
-
-- sounddevice.query_devices() 결과를 래핑해서
-  입력/출력 장치 목록을 쉽게 가져올 수 있게 한다.
-- GUI(PrepPage)에서 콤보박스를 채울 때 사용할 수 있다.
-"""
-
 from __future__ import annotations
 
 import sounddevice as sd
@@ -18,10 +8,6 @@ DeviceInfo = Dict[str, Any]
 
 
 def _query_all_devices() -> List[DeviceInfo]:
-    """
-    로우 레벨 장치 목록을 반환한다.
-    sounddevice.query_devices()의 래퍼.
-    """
     return sd.query_devices()
 
 
@@ -96,7 +82,6 @@ def set_default_devices(input_index: int | None = None, output_index: int | None
 
 
 if __name__ == "__main__":
-    # 로컬 테스트용: 장치 목록을 콘솔에 출력
     print("=== 입력 장치 목록 ===")
     for d in get_input_devices():
         print(
