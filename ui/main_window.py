@@ -39,18 +39,18 @@ class MainWindow(QWidget):
         root_layout.addWidget(self.stack)
         self.setLayout(root_layout)
 
-    def _on_start_requested(self, selected_mic: str, selected_speaker: str):
+    def _on_start_requested(self, mic_idx: int, spk_idx: int):
         """
         준비 페이지에서 '측정 시작' 눌렀을 때:
         1) 녹음 페이지로 전환
         2) 외부(on_start_measurement) 콜백 호출
         """
-        print(f"[UI] start_requested: mic={selected_mic}, speaker={selected_speaker}")
+        print(f"[UI] start_requested: mic idx={mic_idx}, speaker idx={spk_idx}")
 
         self.stack.setCurrentWidget(self.record_page)
 
         if self.on_start_measurement is not None:
-            self.on_start_measurement(selected_mic, selected_speaker)
+            self.on_start_measurement(mic_idx, spk_idx)
 
     def _on_back_from_record(self):
         print("[UI] back_requested from RecordPage")

@@ -10,10 +10,10 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 from PySide6.QtCore import Qt, Signal
+from audio.devices import get_input_devices, get_output_devices
 
 class PrepPage(QWidget):
-    # (selected_mic: str, selected_speaker: str)를 넘겨줌
-    start_requested = Signal(str, str)
+    start_requested = Signal(int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,10 +31,15 @@ class PrepPage(QWidget):
 
         self.mic_combo = QComboBox()
         self.speaker_combo = QComboBox()
-        # TODO: 나중에 실제 디바이스 리스트로 채우기
-        self.mic_combo.addItems(["기본 마이크 (시스템 설정)", "USB Mic 1", "USB Mic 2"])
-        self.speaker_combo.addItems(["기본 스피커 (시스템 설정)", "스튜디오 모니터 L/R", "헤드폰 출력"])
 
+        inputs = get_input_devices()
+        self.mic_devices = inputs           # 인덱스/이름 저장
+        self.mic_combo.addItems([d["name"] for d in inputs])
+        
+        outputs = get_output_devices()
+        self.spk_devices = outputs
+        self.speaker_combo.addItems([d["name"] for d in outputs])
+        
         device_layout.addRow("마이크 입력 장치", self.mic_combo)
         device_layout.addRow("스피커 출력 장치", self.speaker_combo)
 
@@ -130,7 +135,7 @@ class PrepPage(QWidget):
             return
         self.warning_label.clear()
 
-        selected_mic = self.mic_combo.currentText()
-        selected_speaker = self.speaker_combo.currentText()
+        mic_idx = self.mic_devices[self.mic_combo.currentIndex()]["index"]
+        spk_idx = self.spk_devices[self.speaker_combo.currentIndex()]["index"]
 
-        self.start_requested.emit(selected_mic, selected_speaker)
+        self.start_requested.emit(mic_idx, spk_idx)
