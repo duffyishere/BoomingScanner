@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 from PySide6.QtCore import Qt, Signal
-from audio.devices import get_input_devices, get_output_devices
+from audio.devices import get_input_devices, get_output_devices, set_default_devices
 
 class PrepPage(QWidget):
     start_requested = Signal(int, int)
@@ -137,5 +137,6 @@ class PrepPage(QWidget):
 
         mic_idx = self.mic_devices[self.mic_combo.currentIndex()]["index"]
         spk_idx = self.spk_devices[self.speaker_combo.currentIndex()]["index"]
+        set_default_devices(input_index=mic_idx, output_index=spk_idx)
 
         self.start_requested.emit(mic_idx, spk_idx)

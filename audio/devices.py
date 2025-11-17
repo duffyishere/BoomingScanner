@@ -79,7 +79,7 @@ def set_default_devices(input_index: int | None = None, output_index: int | None
     out_dev = output_index if output_index is not None else current[1]
 
     sd.default.device = (in_dev, out_dev)
-
+    print(f"[INFO] 기본 장치 설정됨: 입력={in_dev}, 출력={out_dev}")
 
 if __name__ == "__main__":
     print("=== 입력 장치 목록 ===")
