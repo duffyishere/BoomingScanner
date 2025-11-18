@@ -1,4 +1,3 @@
-# main.py
 from ui.main_window import run_gui
 
 def main():
