@@ -3,13 +3,10 @@ from __future__ import annotations
 import sounddevice as sd
 from typing import List, Dict, Any
 
-
 DeviceInfo = Dict[str, Any]
-
 
 def _query_all_devices() -> List[DeviceInfo]:
     return sd.query_devices()
-
 
 def get_input_devices() -> List[DeviceInfo]:
     """
@@ -37,7 +34,6 @@ def get_input_devices() -> List[DeviceInfo]:
 
     return inputs
 
-
 def get_output_devices() -> List[DeviceInfo]:
     """
     출력(스피커/헤드폰) 장치 목록을 반환한다.
@@ -61,9 +57,7 @@ def get_output_devices() -> List[DeviceInfo]:
                     "default_samplerate": dev.get("default_samplerate", 0.0),
                 }
             )
-
     return outputs
-
 
 def set_default_devices(input_index: int | None = None, output_index: int | None = None) -> None:
     """

@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 
-
 class RecordPage(QWidget):
     back_requested = Signal()
 

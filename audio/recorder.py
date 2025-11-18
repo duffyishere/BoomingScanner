@@ -1,7 +1,6 @@
 import sounddevice as sd
 import numpy as np
 
-
 def record_mic(
     duration: float = 3.0,
     fs: int = 48_000,

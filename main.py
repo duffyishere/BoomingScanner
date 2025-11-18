@@ -13,6 +13,5 @@ def start_measurement(mic_idx: int, spk_idx: int):
     # TODO: 여기서 dsp.analyzer, booming_detector, eq 추천으로 넘기면 됨.
     print("[INFO] 측정/녹음 한 사이클 완료.")
 
-
 if __name__ == "__main__":
     run_gui(on_start_measurement=start_measurement)
