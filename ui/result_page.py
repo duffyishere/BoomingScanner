@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt, Signal
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from dsp.analyzer import compute_frequency_response, smooth_response
+from dsp.analyzer import process_frequency_response, detect_booming_bands
 
 class ResultPage(QWidget):
     back_to_start_requested = Signal()
@@ -98,18 +98,77 @@ class ResultPage(QWidget):
         self.setLayout(layout)
 
     def set_measurement_data(self, sweep, recording, fs, meta):
-        freqs, mag_db = compute_frequency_response(recording, fs)
+        freqs, mag_db_norm, baseline = process_frequency_response(
+            recording,
+            fs,
+            f_min=20.0,
+            f_max=500.0,
+            window_size=7,
+            baseline_method="median",
+        )
         if freqs is None:
             self.summary_label.setText("측정 신호가 너무 짧아서 분석할 수 없습니다.")
+            self.booming_text.clear()
+            self.eq_text.clear()
             return
-        freqs, mag_db_smooth = smooth_response(freqs, mag_db, window_size=7)
 
-        self.plot_frequency_response(freqs, mag_db_smooth)        
-
-        self.summary_label.setText(
-            "기본 주파수 응답을 계산하여 그래프로 표시했습니다.\n"
-            "다음 단계에서 부밍 구간을 탐지하는 로직을 추가할 수 있습니다."
+        # 1) 부밍 대역 탐지
+        booming_bands = detect_booming_bands(
+            freqs,
+            mag_db_norm,
+            threshold_db=6.0,
+            min_bandwidth_hz=5.0,
         )
+
+        # 2) 그래프 갱신 (부밍 대역 하이라이트 포함)
+        self.plot_frequency_response(freqs, mag_db_norm, booming_bands=booming_bands)
+
+        # 3) 부밍 텍스트 영역 업데이트
+        if booming_bands:
+            lines = []
+            for band in booming_bands:
+                lines.append(
+                    f"{band['f_start']:.1f}–{band['f_end']:.1f} Hz"
+                    f" (피크 {band['peak_freq']:.1f} Hz, +{band['peak_gain_db']:.1f} dB)"
+                )
+            self.booming_text.setPlainText("\n".join(lines))
+        else:
+            self.booming_text.setPlainText("유의미한 부밍 대역이 감지되지 않았습니다.")
+
+        # 4) 간단한 EQ 추천 생성
+        eq_lines = []
+        for i, band in enumerate(booming_bands, start=1):
+            peak_freq = band["peak_freq"]
+            peak_gain = band["peak_gain_db"]
+
+            bandwidth = max(band["f_end"] - band["f_start"], 1.0)
+            Q = peak_freq / (bandwidth * 2.0)
+            Q = max(0.3, min(Q, 10.0))
+
+            gain_cut = -min(peak_gain, 8.0)  # 너무 과하지 않게 최대 -8dB까지
+
+            eq_lines.append(
+                f"Filter {i}: Peaking, {peak_freq:.1f} Hz, {gain_cut:.1f} dB, Q={Q:.1f}"
+            )
+
+        if eq_lines:
+            self.eq_text.setPlainText("\n".join(eq_lines))
+        else:
+            self.eq_text.setPlainText("EQ 조정이 꼭 필요해 보이지는 않습니다.")
+
+        # 5) 요약 레이블 업데이트
+        if booming_bands:
+            worst = max(booming_bands, key=lambda b: b["peak_gain_db"])
+            self.summary_label.setText(
+                f"가장 강한 부밍은 약 {worst['peak_freq']:.1f} Hz 근처에서 "
+                f"+{worst['peak_gain_db']:.1f} dB 정도로 감지되었습니다.\n"
+                "제안된 EQ 설정을 참고해 저역을 조정해 보세요."
+            )
+        else:
+            self.summary_label.setText(
+                "저역 대역에서 특별히 튀는 공명은 감지되지 않았습니다.\n"
+                "현재 스피커/방 세팅은 비교적 균형 잡힌 상태입니다."
+            )
     
     def plot_frequency_response(self, freqs, response_db, booming_bands=None):
         """

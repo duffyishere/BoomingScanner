@@ -21,7 +21,7 @@ class SweepMeasureWorker(QObject):
 
         self.duration = duration
         self.f_start = 20.0
-        self.f_end = 500.0
+        self.f_end = 1000.0
         self.fs = 48_000
         self.channels = 1
 
