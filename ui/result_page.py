@@ -95,14 +95,10 @@ class ResultPage(QWidget):
 
         self.setLayout(layout)
 
-    def set_summary(self, text: str):
-        self.summary_label.setText(text)
-
-    def set_booming_result(self, text: str):
-        self.booming_text.setPlainText(text)
-
-    def set_eq_recommendation(self, text: str):
-        self.eq_text.setPlainText(text)
+    def set_measurement_data(self, sweep, recording, fs, meta):
+        # 1. 여기서 분석 호출
+        # 2. 요약 텍스트 만들기 (예: 가장 심한 부밍 대역 등)
+        pass
     
     def plot_frequency_response(self, freqs, response_db, booming_bands=None):
         """

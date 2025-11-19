@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt, Signal
 from audio.devices import get_input_devices, get_output_devices, set_default_devices
 
 class PrepPage(QWidget):
-    start_requested = Signal(int, int)
+    next_requested = Signal(int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -139,4 +139,4 @@ class PrepPage(QWidget):
         spk_idx = self.spk_devices[self.speaker_combo.currentIndex()]["index"]
         set_default_devices(input_index=mic_idx, output_index=spk_idx)
 
-        self.start_requested.emit(mic_idx, spk_idx)
+        self.next_requested.emit(mic_idx, spk_idx)

@@ -13,4 +13,4 @@ def start_measurement(mic_idx: int, spk_idx: int):
     print("[INFO] 측정/녹음 한 사이클 완료.")
 
 if __name__ == "__main__":
-    run_gui(on_start_measurement=start_measurement)
+    run_gui()

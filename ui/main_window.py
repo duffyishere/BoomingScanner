@@ -12,9 +12,8 @@ from ui.record_page import RecordPage
 from ui.result_page import ResultPage
 
 class MainWindow(QWidget):
-    def __init__(self, on_start_measurement=None):
+    def __init__(self):
         super().__init__()
-        self.on_start_measurement = on_start_measurement
 
         self.setWindowTitle("BoomingScanner")
         self.setMinimumSize(600, 600)
@@ -32,7 +31,9 @@ class MainWindow(QWidget):
         self.stack.addWidget(self.record_page)  # index 1
         self.stack.addWidget(self.result_page)  # index 2
 
-        self.prep_page.start_requested.connect(self._on_start_requested)
+        self.prep_page.next_requested.connect(self._on_start_requested)
+
+        self.record_page.next_requested.connect(self._on_record_next)
         self.record_page.back_requested.connect(self._on_back_from_record)
 
         root_layout = QVBoxLayout()
@@ -43,29 +44,27 @@ class MainWindow(QWidget):
         """
         준비 페이지에서 '측정 시작' 눌렀을 때:
         1) 녹음 페이지로 전환
-        2) 외부(on_start_measurement) 콜백 호출
+        2) 비동기방식 측정/녹음 시작
         """
         print(f"[UI] start_requested: mic idx={mic_idx}, speaker idx={spk_idx}")
 
         self.stack.setCurrentWidget(self.record_page)
 
-        if self.on_start_measurement is not None:
-            self.on_start_measurement(mic_idx, spk_idx)
+    def _on_record_next(self, sweep, recording, fs, meta):
+        self.result_page.set_measurement_data(
+            sweep=sweep,
+            recording=recording,
+            fs=fs,
+            meta=meta,
+        )
+        self.stack.setCurrentWidget(self.result_page)
 
     def _on_back_from_record(self):
         print("[UI] back_requested from RecordPage")
         self.stack.setCurrentWidget(self.prep_page)
 
-    def show_result_page(self, summary: str, booming_info: str, eq_recommendation: str, freqs, response_db, booming_bands=None):
-        self.result_page.set_summary(summary)
-        self.result_page.set_booming_result(booming_info)
-        self.result_page.set_eq_recommendation(eq_recommendation)
-        self.result_page.plot_frequency_response(freqs, response_db, booming_bands)
-
-        self.stack.setCurrentWidget(self.result_page)
-        
-def run_gui(on_start_measurement=None):
+def run_gui():
     app = QApplication(sys.argv)
-    window = MainWindow(on_start_measurement=on_start_measurement)
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
