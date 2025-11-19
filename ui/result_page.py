@@ -11,6 +11,8 @@ from PySide6.QtCore import Qt, Signal
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from dsp.analyzer import compute_frequency_response, smooth_response
+
 class ResultPage(QWidget):
     back_to_start_requested = Signal()
 
@@ -32,7 +34,7 @@ class ResultPage(QWidget):
         graph_layout = QVBoxLayout()
 
         # 1. Matplotlib 그래프 캔버스
-        self.figure = Figure(figsize=(5, 3))
+        self.figure = Figure(figsize=(7, 4.5))
         self.ax = self.figure.add_subplot(111)
         self.canvas = FigureCanvas(self.figure)
 
@@ -96,9 +98,18 @@ class ResultPage(QWidget):
         self.setLayout(layout)
 
     def set_measurement_data(self, sweep, recording, fs, meta):
-        # 1. 여기서 분석 호출
-        # 2. 요약 텍스트 만들기 (예: 가장 심한 부밍 대역 등)
-        pass
+        freqs, mag_db = compute_frequency_response(recording, fs)
+        if freqs is None:
+            self.summary_label.setText("측정 신호가 너무 짧아서 분석할 수 없습니다.")
+            return
+        freqs, mag_db_smooth = smooth_response(freqs, mag_db, window_size=7)
+
+        self.plot_frequency_response(freqs, mag_db_smooth)        
+
+        self.summary_label.setText(
+            "기본 주파수 응답을 계산하여 그래프로 표시했습니다.\n"
+            "다음 단계에서 부밍 구간을 탐지하는 로직을 추가할 수 있습니다."
+        )
     
     def plot_frequency_response(self, freqs, response_db, booming_bands=None):
         """
@@ -112,7 +123,7 @@ class ResultPage(QWidget):
         self.ax.clear()
 
         # 기본 응답 곡선
-        self.ax.semilogx(freqs, response_db, linewidth=1.2)
+        self.ax.plot(freqs, response_db, linewidth=1.2)
 
         # 부밍 대역 하이라이트
         if booming_bands:
@@ -126,7 +137,7 @@ class ResultPage(QWidget):
         self.ax.set_ylabel("Magnitude (dB)")
         self.ax.set_title("Frequency Response")
         self.ax.grid(True, which="both", linestyle="--", alpha=0.3)
-        self.ax.set_xlim(left=max(min(freqs), 20), right=max(freqs))
+        self.ax.plot([20, 500], [0, 0], color="black", linewidth=0.8, linestyle=":")
 
         self.figure.tight_layout()
         self.canvas.draw()
