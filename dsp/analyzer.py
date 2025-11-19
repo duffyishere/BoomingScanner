@@ -135,7 +135,7 @@ def process_frequency_response(
 def detect_booming_bands(
     freqs,
     mag_db_norm,
-    threshold_db: float = 20.0,
+    threshold_db: float = 6.0,
     min_bandwidth_hz: float = 5.0,
 ):
     """

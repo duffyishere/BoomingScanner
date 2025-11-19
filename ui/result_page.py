@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from dsp.analyzer import process_frequency_response, detect_booming_bands
 
 class ResultPage(QWidget):
-    back_to_start_requested = Signal()
+    back_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -90,7 +90,7 @@ class ResultPage(QWidget):
         bottom_layout.addStretch(1)
 
         self.back_button = QPushButton("처음으로 돌아가기")
-        self.back_button.clicked.connect(self.back_to_start_requested.emit)
+        self.back_button.clicked.connect(self.back_requested.emit)
 
         bottom_layout.addWidget(self.back_button)
         layout.addLayout(bottom_layout)

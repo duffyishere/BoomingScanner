@@ -34,7 +34,9 @@ class MainWindow(QWidget):
         self.prep_page.next_requested.connect(self._on_start_requested)
 
         self.record_page.next_requested.connect(self._on_record_next)
-        self.record_page.back_requested.connect(self._on_back_from_record)
+        self.record_page.back_requested.connect(self._on_back_to_record)
+
+        self.result_page.back_requested.connect(self._on_back_to_record)
 
         root_layout = QVBoxLayout()
         root_layout.addWidget(self.stack)
@@ -59,8 +61,8 @@ class MainWindow(QWidget):
         )
         self.stack.setCurrentWidget(self.result_page)
 
-    def _on_back_from_record(self):
-        print("[UI] back_requested from RecordPage")
+    def _on_back_to_record(self):
+        print("[UI] back_requested to RecordPage")
         self.record_page.restart_record()
         self.stack.setCurrentWidget(self.prep_page)
 
