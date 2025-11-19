@@ -99,7 +99,7 @@ def process_frequency_response(
     recording,
     fs,
     f_min: float = 20.0,
-    f_max: float = 500.0,
+    f_max: float = 1000.0,
     window_size: int = 7,
     baseline_method: str = "median",
 ):
@@ -135,7 +135,7 @@ def process_frequency_response(
 def detect_booming_bands(
     freqs,
     mag_db_norm,
-    threshold_db: float = 6.0,
+    threshold_db: float = 20.0,
     min_bandwidth_hz: float = 5.0,
 ):
     """

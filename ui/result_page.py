@@ -102,7 +102,7 @@ class ResultPage(QWidget):
             recording,
             fs,
             f_min=20.0,
-            f_max=500.0,
+            f_max=1000.0,
             window_size=7,
             baseline_method="median",
         )

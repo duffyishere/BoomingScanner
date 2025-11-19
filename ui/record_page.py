@@ -137,3 +137,6 @@ class RecordPage(QWidget):
         else:
             self.progress.setRange(0, 100)
             self.progress.setValue(100)
+
+    def restart_record(self):
+        self._measurement_started = False

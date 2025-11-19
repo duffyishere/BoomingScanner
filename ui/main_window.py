@@ -61,6 +61,7 @@ class MainWindow(QWidget):
 
     def _on_back_from_record(self):
         print("[UI] back_requested from RecordPage")
+        self.record_page.restart_record()
         self.stack.setCurrentWidget(self.prep_page)
 
 def run_gui():
