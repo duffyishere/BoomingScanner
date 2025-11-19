@@ -101,8 +101,8 @@ class ResultPage(QWidget):
         freqs, mag_db_norm, baseline = process_frequency_response(
             recording,
             fs,
-            f_min=20.0,
-            f_max=1000.0,
+            f_min=meta.get("f_start", 20.0),
+            f_max=meta.get("f_end", 1000.0),
             window_size=7,
             baseline_method="median",
         )
@@ -116,8 +116,8 @@ class ResultPage(QWidget):
         booming_bands = detect_booming_bands(
             freqs,
             mag_db_norm,
-            threshold_db=6.0,
-            min_bandwidth_hz=5.0,
+            threshold_db=20.0,
+            min_bandwidth_hz=15.0,
         )
 
         # 2) 그래프 갱신 (부밍 대역 하이라이트 포함)
