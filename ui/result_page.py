@@ -103,7 +103,7 @@ class ResultPage(QWidget):
             fs,
             f_min=meta.get("f_start", 20.0),
             f_max=meta.get("f_end", 1000.0),
-            window_size=7,
+            window_size=24,
             baseline_method="median",
         )
         if freqs is None:
@@ -196,7 +196,7 @@ class ResultPage(QWidget):
         self.ax.set_ylabel("Magnitude (dB)")
         self.ax.set_title("Frequency Response")
         self.ax.grid(True, which="both", linestyle="--", alpha=0.3)
-        self.ax.plot([20, 500], [0, 0], color="black", linewidth=0.8, linestyle=":")
+        self.ax.plot([f_start, f_end], [0, 0], color="black", linewidth=0.8, linestyle=":")
 
         self.figure.tight_layout()
         self.canvas.draw()

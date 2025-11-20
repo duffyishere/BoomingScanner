@@ -1,6 +1,6 @@
 import numpy as np
 
-def compute_frequency_response(recording, fs):
+def compute_frequency_response(recording, fs, f_min: float = 20.0, f_max: float = 1000.0):
     """
     녹음된 신호로부터 주파수 응답을 계산한다.
 
@@ -29,7 +29,7 @@ def compute_frequency_response(recording, fs):
 
     freqs = np.fft.rfftfreq(x_win.size, d=1.0 / fs)
 
-    mask = (freqs >= 20.0) & (freqs <= 500.0)
+    mask = (freqs >= f_min) & (freqs <= f_max)
     freqs_band = freqs[mask]
     mag_db_band = mag_db[mask]
 
@@ -37,14 +37,16 @@ def compute_frequency_response(recording, fs):
 
 
 # 이동 평균 기반의 스무딩 함수 추가
-def smooth_response(freqs, mag_db, window_size: int = 7):
+def smooth_response(freqs, mag_db, window_size: int = 24):
     """
-    이동 평균(Moving Average)방식으로 스무딩을 수행한다.
+    1/N 옥타브 방식으로 스무딩을 수행한다.
 
-    Args:
-        freqs: 주파수 배열
-        mag_db: dB 값 배열
-        window_size: 스무딩에 사용할 윈도우 크기(홀수 권장)
+    여기서 window_size 인자는 N(옥타브 분수)을 의미한다.
+    예) window_size=24 → 1/24 옥타브 스무딩
+
+    각 중심 주파수 f_c에 대해
+      [f_c / 2^(1/(2N)), f_c * 2^(1/(2N))]
+    범위에 포함되는 bin들의 dB 값을 평균낸다.
 
     Returns:
         freqs: 기존 주파수 배열
@@ -53,15 +55,31 @@ def smooth_response(freqs, mag_db, window_size: int = 7):
     if freqs is None or mag_db is None:
         return None, None
 
-    if window_size < 1:
+    freqs = np.asarray(freqs)
+    mag_db = np.asarray(mag_db)
+
+    if freqs.size == 0:
         return freqs, mag_db
 
-    pad = window_size // 2
-    padded = np.pad(mag_db, (pad, pad), mode="edge")
+    N = max(int(window_size), 1)
+    smoothed = np.empty_like(mag_db)
 
-    kernel = np.ones(window_size) / window_size
+    half_band_factor = 2.0 ** (1.0 / (2.0 * N))
 
-    smoothed = np.convolve(padded, kernel, mode="valid")
+    for i, f_c in enumerate(freqs):
+        if f_c <= 0:
+            smoothed[i] = mag_db[i]
+            continue
+
+        f_low = f_c / half_band_factor
+        f_high = f_c * half_band_factor
+
+        mask = (freqs >= f_low) & (freqs <= f_high)
+
+        if not np.any(mask):
+            smoothed[i] = mag_db[i]
+        else:
+            smoothed[i] = float(np.mean(mag_db[mask]))
 
     return freqs, smoothed
 
@@ -100,7 +118,7 @@ def process_frequency_response(
     fs,
     f_min: float = 20.0,
     f_max: float = 1000.0,
-    window_size: int = 7,
+    window_size: int = 24,
     baseline_method: str = "median",
 ):
     """
