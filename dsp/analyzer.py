@@ -85,7 +85,7 @@ def smooth_response(freqs, mag_db, window_size: int = 24):
 
 def normalize_response(freqs, mag_db, method: str = "median"):
     """
-    주파수 응답에서 기준선(baseline)을 추정하고 0dB 기준으로 정규화한다.
+    주파수 응답에서 기준선(baseline)을 추정하고 0dB 기준으로 정렬한다.
 
     - 전체 응답의 중앙값(또는 평균값)을 기준선으로 사용하고,
       각 주파수의 dB 값에서 이를 빼서 '상대적인 튐'만 남긴다.
@@ -149,24 +149,26 @@ def process_frequency_response(
     )
     return freqs_n, mag_db_norm, baseline
 
-
 def detect_booming_bands(
     freqs,
     mag_db_norm,
-    threshold_db: float = 6.0,
+    threshold_db: float = 5.0,
     min_bandwidth_hz: float = 5.0,
 ):
     """
-    정규화된 주파수 응답에서 부밍(과도한 피크) 대역을 탐지한다.
+    정규화된 주파수 응답에서 '국소적인 튐'을 기준으로 부밍(과도한 피크) 대역을 탐지한다.
 
-    - baseline(0dB) 대비 threshold_db 이상 튀어 오른 구간을 부밍 후보로 본다.
-    - 연속된 구간을 하나의 대역으로 묶고, 각 대역의 피크 주파수/크기를 계산한다.
+    각 주파수 양옆 대역(로컬 평균)과 비교했을 때 얼마나 더 튀었는지를 본다.
+
+    - mag_db_norm에서 느리게 변하는 전체 추세(로컬 평균)를 한 번 더 추출하고
+    - 원 신호와의 차이가 threshold_db 이상인 구간만 부밍 후보로 본다.
+    - 연속된 구간을 하나의 대역으로 묶고, 각 대역의 피크 주파수/dB를 계산한다.
 
     Args:
         freqs: 주파수 배열 (Hz)
-        mag_db_norm: baseline을 0dB로 정규화한 dB 배열
-        threshold_db: 이 값 이상 튀어오른 구간을 부밍으로 판단
-        min_bandwidth_hz: 이 값보다 좁은 대역은 노이즈로 간주하고 무시
+        mag_db_norm: 정규화된 dB 배열 (baseline은 이미 제거된 상태여도 상관 없음)
+        threshold_db: 양옆 로컬 평균 대비 이 값(dB) 이상 튀어오른 경우를 부밍으로 판단
+        min_bandwidth_hz: 이 값보다 좁은 대역은 노이즈로 보고 무시
 
     Returns:
         booming_bands: 다음 형태의 dict 리스트
@@ -175,7 +177,7 @@ def detect_booming_bands(
                     "f_start": float,
                     "f_end": float,
                     "peak_freq": float,
-                    "peak_gain_db": float,
+                    "peak_gain_db": float,  # 로컬 평균 대비 ΔdB
                 },
                 ...
             ]
@@ -189,7 +191,18 @@ def detect_booming_bands(
     if freqs.size == 0 or mag_db_norm.size == 0:
         return []
 
-    over = mag_db_norm >= threshold_db
+    window_bins = max(5, int(len(freqs) * 0.1))
+    if window_bins % 2 == 0:
+        window_bins += 1  # 홀수로 맞추기
+
+    pad = window_bins // 2
+    padded = np.pad(mag_db_norm, (pad, pad), mode="edge")
+    kernel = np.ones(window_bins) / window_bins
+    local_baseline = np.convolve(padded, kernel, mode="valid")
+
+    delta_db = mag_db_norm - local_baseline
+
+    over = delta_db >= threshold_db
 
     bands = []
     in_band = False
@@ -197,41 +210,48 @@ def detect_booming_bands(
 
     for i, is_over in enumerate(over):
         if is_over and not in_band:
+            # 새로운 부밍 대역 시작
             in_band = True
             start_idx = i
         elif not is_over and in_band:
+            # 부밍 대역 종료
             end_idx = i - 1
             f_start = float(freqs[start_idx])
             f_end = float(freqs[end_idx])
 
+            # 너무 좁은 대역은 노이즈로 간주
             if f_end - f_start >= min_bandwidth_hz:
-                segment = mag_db_norm[start_idx : end_idx + 1]
-                peak_rel_idx = int(np.argmax(segment))
+                segment_delta = delta_db[start_idx : end_idx + 1]
+                peak_rel_idx = int(np.argmax(segment_delta))
                 peak_idx = start_idx + peak_rel_idx
+
                 bands.append(
                     {
                         "f_start": f_start,
                         "f_end": f_end,
                         "peak_freq": float(freqs[peak_idx]),
-                        "peak_gain_db": float(mag_db_norm[peak_idx]),
+                        "peak_gain_db": float(delta_db[peak_idx]),
                     }
                 )
             in_band = False
 
+    # 끝까지 부밍 상태로 끝난 경우 처리
     if in_band:
         end_idx = len(over) - 1
         f_start = float(freqs[start_idx])
         f_end = float(freqs[end_idx])
+
         if f_end - f_start >= min_bandwidth_hz:
-            segment = mag_db_norm[start_idx : end_idx + 1]
-            peak_rel_idx = int(np.argmax(segment))
+            segment_delta = delta_db[start_idx : end_idx + 1]
+            peak_rel_idx = int(np.argmax(segment_delta))
             peak_idx = start_idx + peak_rel_idx
+
             bands.append(
                 {
                     "f_start": f_start,
                     "f_end": f_end,
                     "peak_freq": float(freqs[peak_idx]),
-                    "peak_gain_db": float(mag_db_norm[peak_idx]),
+                    "peak_gain_db": float(delta_db[peak_idx]),
                 }
             )
 

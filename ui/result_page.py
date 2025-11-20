@@ -116,8 +116,6 @@ class ResultPage(QWidget):
         booming_bands = detect_booming_bands(
             freqs,
             mag_db_norm,
-            threshold_db=20.0,
-            min_bandwidth_hz=15.0,
         )
 
         # 2) 그래프 갱신 (부밍 대역 하이라이트 포함)
@@ -196,7 +194,7 @@ class ResultPage(QWidget):
         self.ax.set_ylabel("Magnitude (dB)")
         self.ax.set_title("Frequency Response")
         self.ax.grid(True, which="both", linestyle="--", alpha=0.3)
-        self.ax.plot([f_start, f_end], [0, 0], color="black", linewidth=0.8, linestyle=":")
+        self.ax.plot([0, 1000], [0, 0], color="black", linewidth=0.8, linestyle=":")
 
         self.figure.tight_layout()
         self.canvas.draw()
