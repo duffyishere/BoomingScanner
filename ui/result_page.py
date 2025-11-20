@@ -98,7 +98,7 @@ class ResultPage(QWidget):
         self.setLayout(layout)
 
     def set_measurement_data(self, sweep, recording, fs, meta):
-        freqs, mag_db_norm, baseline = process_frequency_response(
+        freqs, mag_db_norm = process_frequency_response(
             recording,
             fs,
             f_min=meta.get("f_start", 20.0),

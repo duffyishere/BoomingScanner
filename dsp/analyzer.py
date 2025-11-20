@@ -83,36 +83,6 @@ def smooth_response(freqs, mag_db, window_size: int = 24):
 
     return freqs, smoothed
 
-def normalize_response(freqs, mag_db, method: str = "median"):
-    """
-    주파수 응답에서 기준선(baseline)을 추정하고 0dB 기준으로 정렬한다.
-
-    - 전체 응답의 중앙값(또는 평균값)을 기준선으로 사용하고,
-      각 주파수의 dB 값에서 이를 빼서 '상대적인 튐'만 남긴다.
-    - 이렇게 하면 전체 그래프 기울기나 절대 음압 레벨보다는
-      '어디가 얼마나 튀었는지'를 보기 쉬워진다.
-
-    Args:
-        freqs: 주파수 배열
-        mag_db: dB 값 배열
-        method: 'median' 또는 'mean' (baseline 산출 방식)
-
-    Returns:
-        freqs: 원래 주파수 배열
-        normalized: baseline을 0dB로 맞춘 정규화된 dB 배열
-        baseline: 기준선으로 사용된 값(dB)
-    """
-    if freqs is None or mag_db is None:
-        return None, None, None
-
-    if method == "mean":
-        baseline = float(np.mean(mag_db))
-    else:
-        baseline = float(np.median(mag_db))
-
-    normalized = mag_db - baseline
-    return freqs, normalized, baseline
-
 def process_frequency_response(
     recording,
     fs,
@@ -142,12 +112,8 @@ def process_frequency_response(
         return None, None, None
 
     freqs_s, mag_db_smooth = smooth_response(freqs, mag_db, window_size=window_size)
-    freqs_n, mag_db_norm, baseline = normalize_response(
-        freqs_s,
-        mag_db_smooth,
-        method=baseline_method,
-    )
-    return freqs_n, mag_db_norm, baseline
+
+    return freqs_s, mag_db_smooth
 
 def detect_booming_bands(
     freqs,
